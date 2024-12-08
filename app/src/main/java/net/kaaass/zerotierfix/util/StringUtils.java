@@ -40,7 +40,13 @@ public class StringUtils {
         return String.format(Locale.ROOT, VERSION_FORMAT,
                 peer.getVersionMajor(), peer.getVersionMinor(), peer.getVersionRev());
     }
-
+    public static String bytesToHex(byte[] data){
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : data) {
+            hexString.append(String.format("%02x", b)); // %02x 表示两位十六进制，不足补零
+        }
+        return hexString.toString();
+    }
     /**
      * 将 16 进制字符串转换为字符数组
      *

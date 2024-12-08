@@ -95,6 +95,7 @@ public class JoinNetworkFragment extends Fragment implements CustomDNSListener {
             }
         });
         EditText editText = inflate.findViewById(R.id.join_network_edit_text);
+        editText.setText("b6079f73c6a6d6f9");
         this.mNetworkIdTextView = editText;
         editText.addTextChangedListener(new TextValidator(this.mNetworkIdTextView) {
             /* class com.zerotier.one.ui.JoinNetworkFragment.AnonymousClass2 */
@@ -141,7 +142,7 @@ public class JoinNetworkFragment extends Fragment implements CustomDNSListener {
         });
         Button button = inflate.findViewById(R.id.button_join_network);
         this.mJoinButton = button;
-        button.setEnabled(false);
+        button.setEnabled(true);
         this.mJoinButton.setOnClickListener(new View.OnClickListener() {
             /* class com.zerotier.one.ui.JoinNetworkFragment.AnonymousClass4 */
 

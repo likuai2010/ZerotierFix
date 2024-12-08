@@ -8,12 +8,14 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    sourceSets {
+        main {
+            java.srcDirs += '../externals/core/java/'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -35,6 +37,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.zerotier.sdk'
 }
 
 dependencies {

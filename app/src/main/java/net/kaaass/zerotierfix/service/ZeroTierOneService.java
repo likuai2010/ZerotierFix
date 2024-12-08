@@ -106,108 +106,7 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
     private TunTapAdapter tunTapAdapter;
     private UdpCom udpCom;
     private Thread udpThread;
-    private Thread v4MulticastScanner = new Thread() {
-        /* class com.zerotier.one.service.ZeroTierOneService.AnonymousClass1 */
-        List<String> subscriptions = new ArrayList<>();
 
-        @Override
-        public void run() {
-            Log.d(ZeroTierOneService.TAG, "IPv4 Multicast Scanner Thread Started.");
-            while (!isInterrupted()) {
-                try {
-                    List<String> groups = NetworkInfoUtils.listMulticastGroupOnInterface("tun0", false);
-
-                    ArrayList<String> arrayList2 = new ArrayList<>(this.subscriptions);
-                    ArrayList<String> arrayList3 = new ArrayList<>(groups);
-                    arrayList3.removeAll(arrayList2);
-                    for (String str : arrayList3) {
-                        try {
-                            byte[] hexStringToByteArray = StringUtils.hexStringToBytes(str);
-                            for (int i = 0; i < hexStringToByteArray.length / 2; i++) {
-                                byte b = hexStringToByteArray[i];
-                                hexStringToByteArray[i] = hexStringToByteArray[(hexStringToByteArray.length - i) - 1];
-                                hexStringToByteArray[(hexStringToByteArray.length - i) - 1] = b;
-                            }
-                            ResultCode multicastSubscribe = ZeroTierOneService.this.node.multicastSubscribe(ZeroTierOneService.this.networkId, TunTapAdapter.multicastAddressToMAC(InetAddress.getByAddress(hexStringToByteArray)));
-                            if (multicastSubscribe != ResultCode.RESULT_OK) {
-                                Log.e(ZeroTierOneService.TAG, "Error when calling multicastSubscribe: " + multicastSubscribe);
-                            }
-                        } catch (Exception e) {
-                            Log.e(ZeroTierOneService.TAG, e.toString(), e);
-                        }
-                    }
-                    arrayList2.removeAll(new ArrayList<>(groups));
-                    for (String str2 : arrayList2) {
-                        try {
-                            byte[] hexStringToByteArray2 = StringUtils.hexStringToBytes(str2);
-                            for (int i2 = 0; i2 < hexStringToByteArray2.length / 2; i2++) {
-                                byte b2 = hexStringToByteArray2[i2];
-                                hexStringToByteArray2[i2] = hexStringToByteArray2[(hexStringToByteArray2.length - i2) - 1];
-                                hexStringToByteArray2[(hexStringToByteArray2.length - i2) - 1] = b2;
-                            }
-                            ResultCode multicastUnsubscribe = ZeroTierOneService.this.node.multicastUnsubscribe(ZeroTierOneService.this.networkId, TunTapAdapter.multicastAddressToMAC(InetAddress.getByAddress(hexStringToByteArray2)));
-                            if (multicastUnsubscribe != ResultCode.RESULT_OK) {
-                                Log.e(ZeroTierOneService.TAG, "Error when calling multicastUnsubscribe: " + multicastUnsubscribe);
-                            }
-                        } catch (Exception e) {
-                            Log.e(ZeroTierOneService.TAG, e.toString(), e);
-                        }
-                    }
-                    this.subscriptions = groups;
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Log.d(ZeroTierOneService.TAG, "V4 Multicast Scanner Thread Interrupted", e);
-                    break;
-                }
-            }
-            Log.d(ZeroTierOneService.TAG, "IPv4 Multicast Scanner Thread Ended.");
-        }
-    };
-    private Thread v6MulticastScanner = new Thread() {
-        /* class com.zerotier.one.service.ZeroTierOneService.AnonymousClass2 */
-        List<String> subscriptions = new ArrayList<>();
-
-        @Override
-        public void run() {
-            Log.d(ZeroTierOneService.TAG, "IPv6 Multicast Scanner Thread Started.");
-            while (!isInterrupted()) {
-                try {
-                    List<String> groups = NetworkInfoUtils.listMulticastGroupOnInterface("tun0", true);
-
-                    ArrayList<String> arrayList2 = new ArrayList<>(this.subscriptions);
-                    ArrayList<String> arrayList3 = new ArrayList<>(groups);
-                    arrayList3.removeAll(arrayList2);
-                    for (String str : arrayList3) {
-                        try {
-                            ResultCode multicastSubscribe = ZeroTierOneService.this.node.multicastSubscribe(ZeroTierOneService.this.networkId, TunTapAdapter.multicastAddressToMAC(InetAddress.getByAddress(StringUtils.hexStringToBytes(str))));
-                            if (multicastSubscribe != ResultCode.RESULT_OK) {
-                                Log.e(ZeroTierOneService.TAG, "Error when calling multicastSubscribe: " + multicastSubscribe);
-                            }
-                        } catch (Exception e) {
-                            Log.e(ZeroTierOneService.TAG, e.toString(), e);
-                        }
-                    }
-                    arrayList2.removeAll(new ArrayList<>(groups));
-                    for (String str2 : arrayList2) {
-                        try {
-                            ResultCode multicastUnsubscribe = ZeroTierOneService.this.node.multicastUnsubscribe(ZeroTierOneService.this.networkId, TunTapAdapter.multicastAddressToMAC(InetAddress.getByAddress(StringUtils.hexStringToBytes(str2))));
-                            if (multicastUnsubscribe != ResultCode.RESULT_OK) {
-                                Log.e(ZeroTierOneService.TAG, "Error when calling multicastUnsubscribe: " + multicastUnsubscribe);
-                            }
-                        } catch (Exception e) {
-                            Log.e(ZeroTierOneService.TAG, e.toString(), e);
-                        }
-                    }
-                    this.subscriptions = groups;
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Log.d(ZeroTierOneService.TAG, "V6 Multicast Scanner Thread Interrupted", e);
-                    break;
-                }
-            }
-            Log.d(ZeroTierOneService.TAG, "IPv6 Multicast Scanner Thread Ended.");
-        }
-    };
     private Thread vpnThread;
 
     public VirtualNetworkConfig getVirtualNetworkConfig(long j) {
@@ -265,6 +164,7 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         long networkId;
+
         Log.d(TAG, "onStartCommand");
         if (startId == 3) {
             Log.i(TAG, "Authorizing VPN");
@@ -317,6 +217,7 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
         }
         this.networkId = networkId;
 
+
         // 检查当前的网络环境
         var preferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useCellularData = preferences.getBoolean(Constants.PREF_NETWORK_USE_CELLULAR_DATA, false);
@@ -344,7 +245,7 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
                     this.svrSocket = new DatagramSocket(null);
                     this.svrSocket.setReuseAddress(true);
                     this.svrSocket.setSoTimeout(1000);
-                    this.svrSocket.bind(new InetSocketAddress(9994));
+                    this.svrSocket.bind(new InetSocketAddress(9993));
                 }
                 if (!protect(this.svrSocket)) {
                     Log.e(TAG, "Error protecting UDP socket from feedback loop.");
@@ -366,35 +267,8 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
                         Log.e(TAG, "Error starting ZT1 Node: " + result);
                         return START_NOT_STICKY;
                     }
-                    this.onNodeStatusRequest(null);
-
-                    // 持久化当前节点信息
-                    long address = this.node.address();
-                    DatabaseUtils.writeLock.lock();
-                    try {
-                        var appNodeDao = ((ZerotierFixApplication) getApplication())
-                                .getDaoSession().getAppNodeDao();
-                        var nodesList = appNodeDao.queryBuilder().build()
-                                .forCurrentThread().list();
-                        if (nodesList.isEmpty()) {
-                            var appNode = new AppNode();
-                            appNode.setNodeId(address);
-                            appNode.setNodeIdStr(String.format("%10x", address));
-                            appNodeDao.insert(appNode);
-                        } else {
-                            var appNode = nodesList.get(0);
-                            appNode.setNodeId(address);
-                            appNode.setNodeIdStr(String.format("%10x", address));
-                            appNodeDao.save(appNode);
-                        }
-                    } finally {
-                        DatabaseUtils.writeLock.unlock();
-                    }
-
-                    this.eventBus.post(new NodeIDEvent(address));
                     this.udpCom.setNode(this.node);
                     this.tunTapAdapter.setNode(this.node);
-
                     // 启动 UDP 消息处理线程
                     var thread = new Thread(this.udpCom, "UDP Communication Thread");
                     this.udpThread = thread;
@@ -449,22 +323,6 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
             } catch (InterruptedException ignored) {
             }
             this.vpnThread = null;
-        }
-        if (this.v4MulticastScanner != null) {
-            this.v4MulticastScanner.interrupt();
-            try {
-                this.v4MulticastScanner.join();
-            } catch (InterruptedException ignored) {
-            }
-            this.v4MulticastScanner = null;
-        }
-        if (this.v6MulticastScanner != null) {
-            this.v6MulticastScanner.interrupt();
-            try {
-                this.v6MulticastScanner.join();
-            } catch (InterruptedException ignored) {
-            }
-            this.v6MulticastScanner = null;
         }
         if (this.vpnSocket != null) {
             try {
@@ -535,21 +393,16 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
         while (!Thread.interrupted()) {
             try {
                 // 在后台任务截止期前循环进行后台任务
-                var taskDeadline = this.nextBackgroundTaskDeadline;
                 long currentTime = System.currentTimeMillis();
-                int cmp = Long.compare(taskDeadline, currentTime);
-                if (cmp <= 0) {
-                    long[] newDeadline = {0};
-                    var taskResult = this.node.processBackgroundTasks(currentTime, newDeadline);
-                    synchronized (this) {
-                        this.nextBackgroundTaskDeadline = newDeadline[0];
-                    }
-                    if (taskResult != ResultCode.RESULT_OK) {
-                        Log.e(TAG, "Error on processBackgroundTasks: " + taskResult.toString());
-                        shutdown();
-                    }
+                long[] newDeadline = {0};
+                Log.e(TAG, "currentTime: " + currentTime);
+                var taskResult = this.node.processBackgroundTasks(currentTime, newDeadline);
+                if (taskResult != ResultCode.RESULT_OK) {
+                    Log.e(TAG, "Error on processBackgroundTasks: " + taskResult.toString());
+                    shutdown();
                 }
-                Thread.sleep(cmp > 0 ? taskDeadline - currentTime : 100);
+//                Log.d(TAG, "sleep " + t);
+                Thread.sleep( 5000);
             } catch (InterruptedException ignored) {
                 break;
             } catch (Exception e) {
@@ -697,11 +550,11 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
      */
     @Override
     public void onEvent(Event event) {
-        Log.d(TAG, "Event: " + event.toString());
-        // 更新节点状态
-        if (this.node.isInited()) {
-            this.eventBus.post(new NodeStatusEvent(this.node.status(), this.node.getVersion()));
-        }
+//        Log.d(TAG, "Event: " + event.toString());
+//        // 更新节点状态
+//        if (this.node.isInited()) {
+//            this.eventBus.post(new NodeStatusEvent(this.node.status(), this.node.getVersion()));
+//        }
     }
 
     @Override // com.zerotier.sdk.EventListener
@@ -965,16 +818,8 @@ public class ZeroTierOneService extends VpnService implements Runnable, EventLis
                 .setContentIntent(pendingIntent).build();
         this.notificationManager.notify(ZT_NOTIFICATION_TAG, notification);
         Log.i(TAG, "ZeroTier One Connected");
-
         // 旧版本 Android 多播处理
-        if (Build.VERSION.SDK_INT < 29) {
-            if (this.v4MulticastScanner != null && !this.v4MulticastScanner.isAlive()) {
-                this.v4MulticastScanner.start();
-            }
-            if (!this.disableIPv6 && this.v6MulticastScanner != null && !this.v6MulticastScanner.isAlive()) {
-                this.v6MulticastScanner.start();
-            }
-        }
+
         return true;
     }
 
